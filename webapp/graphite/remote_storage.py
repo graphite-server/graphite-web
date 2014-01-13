@@ -164,7 +164,7 @@ class RemoteReader(object):
     # a single thread.
     (request_lock, wait_lock, completion_event) = self.get_request_locks(url)
 
-    if request_lock.acquire(True): # we only send the request the first time we're called
+    if request_lock.acquire(False): # we only send the request the first time we're called
       try:
         log.info("RemoteReader.request_data :: requesting %s" % url)
         connection = HTTPConnectionWithTimeout(self.store.host)
