@@ -167,7 +167,7 @@ def getPermissions(user):
   if editGroup and len(user.groups.filter(name = editGroup)) == 0:
     permissions = []
   return permissions
-  
+
 
 def save(request, name):
   if 'change' not in getPermissions(request.user):
@@ -280,9 +280,9 @@ def create_temporary(request):
 
 
 def json_response(obj):
-  return HttpResponse(mimetype='application/json', content=json.dumps(obj))
+  return HttpResponse(content_type='application/json', content=json.dumps(obj))
 
-  
+
 def user_login(request):
   response = dict(errors={}, text={}, success=False, permissions=[])
   user = authenticate(username=request.POST['username'],
