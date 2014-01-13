@@ -179,7 +179,7 @@ class RemoteReader(object):
     def wait_for_results():
       if wait_lock.acquire(False): # the FetchInProgress that gets waited on waits for the actual completion
         try:
-          global connection
+          nonlocal connection
           response = connection.getresponse()
           if response.status != 200:
             raise Exception("Error response %d %s from %s" % (response.status, response.reason, url))
