@@ -307,7 +307,7 @@ def json_response_for(request, data, content_type='application/json', jsonp=Fals
 
   content = json.dumps(data, ensure_ascii=ensure_ascii)
   if jsonp:
-    content = "%s(%)" % (jsonp, content)
+    content = "%s(%s)" % (jsonp, content)
     content_type = 'text/javascript'
   if not ensure_ascii:
     content_type += ';charset=utf-8'
