@@ -179,7 +179,7 @@ def expand_view(request):
   response['Pragma'] = 'no-cache'
   response['Cache-Control'] = 'no-cache'
   jsonp = request.REQUEST.get('jsonp', False)
-  return json_response_for(request, matches, jsonp=jsonp)
+  return json_response_for(request, response, jsonp=jsonp)
 
 
 def get_metadata_view(request):
