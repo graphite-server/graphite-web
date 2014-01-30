@@ -1,18 +1,18 @@
 /* This is the basic body style of the graph area */
 .graph-area-body {
-  color: black;
-  background-color: white;
+  color: white;
+  background-color: black;
 }
 
 /* Metric Completer Settings */
 .completer-input-field {
-  font-size: 9pt;
+  font-size: 11pt;
   font-family: monospace;
 }
 
 /* This class is applied to each completer result row. */
 .metric-result div {
-  font-size: 9pt;
+  font-size: 11pt;
   font-family: monospace;
 }
 
