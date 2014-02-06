@@ -78,15 +78,11 @@ LEGEND_MAX_ITEMS = 10
 RRD_CF = 'AVERAGE'
 
 #Authentication settings
-USE_LDAP_AUTH = False
-LDAP_SERVER = "" # "ldapserver.mydomain.com"
-LDAP_PORT = 389
-LDAP_USE_TLS = False
-LDAP_SEARCH_BASE = "" # "OU=users,DC=mydomain,DC=com"
-LDAP_BASE_USER = "" # "CN=some_readonly_account,DC=mydomain,DC=com"
-LDAP_BASE_PASS = "" # "my_password"
-LDAP_USER_QUERY = "" # "(username=%s)"  For Active Directory use "(sAMAccountName=%s)"
-LDAP_URI = None
+USE_AUTH_LDAP = False
+AUTH_LDAP_SERVER_URI = "" # "ldapserver.mydomain.com"
+AUTH_LDAP_BIND_DN = "" # Empty for anonymous auth
+AUTH_LDAP_BIND_PASSWORD = "" # Empty for anonymous auth
+AUTH_LDAP_USER_SEARCH = "" # LDAPSearch("OU=users,DC=mydomain,DC=com", ldap.SCOPE_SUBTREE, "(uid=%(user)s)")
 
 #Set this to True to delegate authentication to the web server
 USE_REMOTE_USER_AUTHENTICATION = False
@@ -200,16 +196,13 @@ else:
 if MEMCACHE_HOSTS:
   CACHE_BACKEND = 'memcached://' + ';'.join(MEMCACHE_HOSTS) + ('/?timeout=%d' % DEFAULT_CACHE_DURATION)
 
-# Authentication shortcuts
-if USE_LDAP_AUTH and LDAP_URI is None:
-  LDAP_URI = "ldap://%s:%d/" % (LDAP_SERVER, LDAP_PORT)
-
 if USE_REMOTE_USER_AUTHENTICATION:
   MIDDLEWARE_CLASSES += ('django.contrib.auth.middleware.RemoteUserMiddleware',)
   AUTHENTICATION_BACKENDS.insert(0,'django.contrib.auth.backends.RemoteUserBackend')
 
-if USE_LDAP_AUTH:
-  AUTHENTICATION_BACKENDS.insert(0,'graphite.account.ldapBackend.LDAPBackend')
+if USE_AUTH_LDAP:
+  AUTHENTICATION_BACKENDS.insert(0,'django.contrib.auth.backends.ModelBackend')
+  AUTHENTICATION_BACKENDS.insert(0,'django_auth_ldap.backend.LDAPBackend')
 
 if SECRET_KEY == 'UNSAFE_DEFAULT':
   warn('SECRET_KEY is set to an unsafe default. This should be set in local_settings.py for better security')
