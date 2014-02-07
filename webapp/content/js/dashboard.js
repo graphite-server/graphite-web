@@ -23,13 +23,13 @@ var cookieProvider = new Ext.state.CookieProvider({
   path: "/dashboard"
 });
 
-var NAV_BAR_REGION = cookieProvider.get('navbar-region') || 'north';
+var NAV_BAR_REGION = cookieProvider.get('navbar-region') || 'west';
 
 var CONFIRM_REMOVE_ALL = cookieProvider.get('confirm-remove-all') != 'false';
 
 /* Nav Bar configuration */
 var navBarNorthConfig = {
-  region: 'north',
+  region: 'west',
   layout: 'hbox',
   layoutConfig: { align: 'stretch' },
   collapsible: true,
@@ -740,9 +740,9 @@ function initDashboard () {
   };
 
   // Load initial dashboard state if it was passed in
+  navBar.collapse();
   if (initialState) {
     applyState(initialState);
-    navBar.collapse();
   }
 
   if(window.location.hash != '')
@@ -2451,13 +2451,11 @@ function deleteDashboard(name) {
 function setDashboardName(name) {
   dashboardName = name;
   var saveButton = Ext.getCmp('dashboard-save-button');
-
-  if (name == null || !hasPermission('change')) {
+   
+  if (name == null) {
     dashboardURL = null;
     document.title = "untitled - Graphite Dashboard";
     navBar.setTitle("untitled");
-    saveButton.setText("Save");
-    saveButton.disable();
   } else {
     var urlparts = location.href.split('#')[0].split('/');
     var i = urlparts.indexOf('dashboard');
@@ -2466,12 +2464,17 @@ function setDashboardName(name) {
       return;
     }
     urlparts = urlparts.slice(0, i+1);
-    urlparts.push( encodeURI(name) )
     dashboardURL = urlparts.join('/');
-
+    dashboardURL = dashboardURL + "/#" + encodeURI(name);
     document.title = name + " - Graphite Dashboard";
     window.location.hash = name;
     navBar.setTitle(name + " - (" + dashboardURL + ")");
+  }
+
+  if (!hasPermission('change')) {
+    saveButton.setText("Save");
+    saveButton.disable();
+  } else {
     saveButton.setText('Save "' + name + '"');
     saveButton.enable();
   }
