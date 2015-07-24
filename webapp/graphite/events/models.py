@@ -1,9 +1,8 @@
-import time
 import os
 
 from django.db import models
-from django.contrib import admin
 from tagging.managers import ModelTaggedItemManager
+from tagging.models import Tag
 
 if os.environ.get('READTHEDOCS'):
     TagField = lambda *args, **kwargs: None

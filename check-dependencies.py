@@ -5,9 +5,9 @@ import sys
 # Simple python version test
 major,minor = sys.version_info[:2]
 py_version = sys.version.split()[0]
-if major != 2 or minor < 4:
+if major != 2 or minor < 6:
   # SystemExit defaults to returning 1 when printing a string to stderr
-  raise SystemExit("You are using python %s, but version 2.4 or greater is required" % py_version)
+  raise SystemExit("You are using python %s, but version 2.6 or greater is required" % py_version)
 
 required = 0
 optional = 0
@@ -109,6 +109,14 @@ except ImportError:
     required += 1
 
 
+# Test for a pytz module
+try:
+  import pytz
+except ImportError:
+  print "[FATAL] Unable to import the 'pytz' module, do you have pytz installed for python %s?" % py_version
+  fatal += 1
+
+
 # Test for zope.interface
 try:
   from zope.interface import Interface
@@ -122,17 +130,6 @@ try:
   import memcache
 except ImportError:
   sys.stderr.write("[OPTIONAL] Unable to import the 'memcache' module, do you have python-memcached installed for python %s? This feature is not required but greatly improves performance.\n" % py_version)
-  optional += 1
-
-
-# Test for sqlite
-try:
-  try:
-    import sqlite3 # python 2.5+
-  except ImportError:
-    from pysqlite2 import dbapi2 # python 2.4
-except ImportError:
-  sys.stderr.write("[OPTIONAL] Unable to import the sqlite module, do you have python-sqlite2 installed for python %s? If you plan on using another database backend that Django supports (such as mysql or postgres) then don't worry about this. However if you do not want to setup the database yourself, you will need to install sqlite2 and python-sqlite2.\n" % py_version)
   optional += 1
 
 
@@ -171,13 +168,16 @@ try:
   import rrdtool
 except ImportError:
   sys.stderr.write("[OPTIONAL] Unable to import the 'python-rrdtool' module, this is required for reading RRD.\n")
-
-# Test for cylowess
-try:
-  import cylowess
-except ImportError:
-  sys.stderr.write("[OPTIONAL] Unable to import 'cylowess', do you have cylowess installed for python %s? This allows for faster lowess processing (locallly weighted scatterplot smoothing) than the standard version, espcially for large datasets. You can install from here: https://github.com/livingsocial/cylowess\n" % py_version)
   optional += 1
+
+
+# Test for whitenoise
+try:
+    import whitenoise
+except ImportError:
+    sys.stderr.write("[OPTIONAL] Unable to import the 'whitenoise' module. This is useful for serving static files.\n")
+    optional += 1
+
 
 if optional:
   sys.stderr.write("%d optional dependencies not met. Please consider the optional items before proceeding.\n" % optional)

@@ -13,14 +13,15 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 import imp
-from os.path import splitext, basename
 import os
-from shutil import move
-from tempfile import mkstemp
 import socket
-import errno
 import time
 import sys
+import calendar
+import pytz
+from os.path import splitext, basename, relpath
+from shutil import move
+from tempfile import mkstemp
 try:
   import cPickle as pickle
   USING_CPICKLE = True
@@ -33,7 +34,6 @@ try:
 except ImportError:
   from StringIO import StringIO
 
-from os import environ
 from django.conf import settings
 from django.contrib.auth.models import User
 from graphite.account.models import Profile
@@ -53,6 +53,11 @@ if hasattr(json, 'read') and not hasattr(json, 'loads'):
   json.load = lambda file: json.read( file.read() )
   json.dump = lambda obj, file: file.write( json.write(obj) )
 
+def epoch(dt):
+  """
+  Returns the epoch timestamp of a timezone-aware datetime object.
+  """
+  return calendar.timegm(dt.astimezone(pytz.utc).timetuple())
 
 def getProfile(request, allowDefault=True):
   if request.user.is_authenticated():
@@ -72,22 +77,19 @@ def is_local_interface(host):
   if ':' in host:
     host = host.split(':',1)[0]
 
-  for port in xrange(1025, 65535):
-    try:
-      sock = socket.socket()
-      sock.bind( (host,port) )
-      sock.close()
+  try:
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.connect( (host, 4242) )
+    local_ip = sock.getsockname()[0]
+    sock.close()
+  except:
+    log.exception("Failed to open socket with %s" % host)
+    raise
 
-    except socket.error, e:
-      if e.args[0] == errno.EADDRNOTAVAIL:
-        return False
-      else:
-        continue
+  if local_ip == host:
+    return True
 
-    else:
-      return True
-
-  raise Exception("Failed all attempts at binding to interface %s, last exception was %s" % (host, e))
+  return False
 
 
 def is_pattern(s):
@@ -145,7 +147,9 @@ if USING_CPICKLE:
   class SafeUnpickler(object):
     PICKLE_SAFE = {
       'copy_reg': set(['_reconstructor']),
-      '__builtin__': set(['object']),
+      '__builtin__': set(['object', 'list']),
+      'collections': set(['deque']),
+      'graphite.render.datalib': set(['TimeSeries']),
       'graphite.intervals': set(['Interval', 'IntervalSet']),
     }
 
@@ -169,7 +173,9 @@ else:
   class SafeUnpickler(pickle.Unpickler):
     PICKLE_SAFE = {
       'copy_reg': set(['_reconstructor']),
-      '__builtin__': set(['object']),
+      '__builtin__': set(['object', 'list']),
+      'collections': set(['deque']),
+      'graphite.render.datalib': set(['TimeSeries']),
       'graphite.intervals': set(['Interval', 'IntervalSet']),
     }
 
@@ -219,7 +225,7 @@ def build_index(base_path, extension, fd):
   contents = os.walk(base_path, followlinks=True)
   extension_len = len(extension)
   for (dirpath, dirnames, filenames) in contents:
-    path = dirpath[len(base_path) + 1:].replace('/', '.')
+    path = relpath(dirpath, base_path).replace('/', '.')
     for metric in filenames:
       if metric.endswith(extension):
         metric = metric[:-extension_len]

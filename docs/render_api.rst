@@ -3,7 +3,7 @@ The Render URL API
 ==================
 
 The graphite webapp provides a ``/render`` endpoint for generating graphs
-and retreiving raw data. This endpoint accepts various arguments via query
+and retrieving raw data. This endpoint accepts various arguments via query
 string parameters.  These parameters are separated by an ampersand (``&``)
 and are supplied in the format:
 
@@ -48,7 +48,7 @@ and specify a time window for the graph via `from / until`_.
 target
 ------
 
-The ``target`` parameter specifies a path identifying one or metrics, optionally with functions acting on
+The ``target`` parameter specifies a path identifying one or several metrics, optionally with functions acting on
 those metrics.  Paths are documented below, while functions are listed on the :doc:`functions` page.
 
 .. _paths-and-wildcards:
@@ -203,6 +203,43 @@ Examples:
   &from=monday
   (show data since the previous monday)
 
+template
+--------
+
+The ``target`` metrics can use a special ``template`` function which
+allows the metric paths to contain variables. Values for these variables
+can be provided via the ``template`` query parameter.
+
+Examples
+^^^^^^^^
+
+Example:
+
+.. code-block:: none
+
+  &target=template(hosts.$hostname.cpu)&template[hostname]=worker1
+
+Default values for the template variables can also be provided:
+
+.. code-block:: none
+
+  &target=template(hosts.$hostname.cpu, hostname="worker1")
+
+Positional arguments can be used instead of named ones:
+
+.. code-block:: none
+
+  &target=template(hosts.$1.cpu, "worker1")
+  &target=template(hosts.$1.cpu, "worker1")&template[1]=worker*
+
+In addition to path substitution, variables can be used for numeric and string literals:
+
+.. code-block:: none
+
+  &target=template(constantLine($number))&template[number]=123
+  &target=template(sinFunction($name))&template[name]=nameOfMySineWaveMetric
+
+
 Data Display Formats
 ====================
 
@@ -345,7 +382,7 @@ rawData
 
 .. deprecated:: 0.9.9
 
-  This option is deprecated in favor of format_
+  This option is deprecated in favor of format
 
 Used to get numerical data out of the webapp instead of an image.
 Can be set to true, false, csv.
@@ -375,6 +412,7 @@ areaAlpha
 *Default: 1.0*
 
 Takes a floating point number between 0.0 and 1.0 
+
 Sets the alpha (transparency) value of filled areas when using an areaMode_
 
 .. _param-areaMode:
@@ -432,14 +470,15 @@ darkgray     111,111,111
 darkgrey     111,111,111
 ============ =============
 
-RGB can be passed directly in the format #RRGGBB where RR, GG, and BB are 2-digit hex vaules for red, green and blue, respectively.
+RGB can be passed directly in the format #RRGGBB[AA] where RR, GG, and BB are 2-digit hex vaules for red, green and blue, respectively. AA is an optional addition describing the opacity ("alpha"). Where FF is fully opaque, 00 fully transparent.
 
 Examples:
 
 .. code-block:: none
 
   &bgcolor=blue
-  &bgcolor=#2222FF
+  &bgcolor=2222FF
+  &bgcolor=5522FF60
 
 cacheTimeout
 ------------
@@ -453,13 +492,15 @@ colorList
 ---------
 *Default: value from the [default] template in graphTemplates.conf*
 
-Takes one or more comma-separated color names or RGB values (see bgcolor for a list of color names) and uses that list in order as the colors of the lines.  If more lines / metrics are drawn than colors passed, the list is reused in order.
+Takes one or more comma-separated color names or RGB values (see bgcolor for a list of color names) and uses that list in order as the colors of the lines.
+If more lines / metrics are drawn than colors passed, the list is reused in order. Any RGB value can also have an optional transparency (00 being fully transparent, FF being opaque), as shown in the second example.
 
 Example:
 
 .. code-block:: none
 
-  &colorList=green,yellow,orange,red,purple,#DECAFF
+  &colorList=green,yellow,orange,red,purple,DECAFF
+  &colorList=FF000055,00FF00AA,DECAFFEF
 
 .. _param-drawNullAsZero:
 
@@ -596,6 +637,7 @@ hideAxes
 *Default: False*
 
 If set to ``true`` the X and Y axes will not be rendered
+
 Example:
 
 .. code-block:: none
@@ -672,7 +714,7 @@ lineMode
 Sets the line drawing behavior. Takes one of the following parameters:
 
 ``slope``
-  Slope line mode draws a line from each point to the next. Periods will Null values will not be drawn
+  Slope line mode draws a line from each point to the next. Periods with Null values will not be drawn
 ``staircase``
   Staircase draws a flat line for the duration of a time period and then a vertical line up or down to the next value
 ``connected``
@@ -721,14 +763,14 @@ majorGridLineColor
 
 Sets the color of the major grid lines.
 
-See bgcolor for valid color names and formats.
+See bgcolor_ for valid color names and formats.
 
 
 Example:
 
 .. code-block:: none
 
-  &majorGridLineColor=#FF22FF
+  &majorGridLineColor=FF22FF
 
 margin
 ------
@@ -1059,6 +1101,10 @@ Value can be one of:
   Use si units (powers of 1000) - K, M, G, T, P
 ``binary``
   Use binary units (powers of 1024) - Ki, Mi, Gi, Ti, Pi
+``sec``
+  Use time units (seconds) - m, H, D, M, Y
+``msec``
+  Use time units (milliseconds) - s, m, H, D, M, Y
 ``none``
   Dont compact values, display the raw number
 

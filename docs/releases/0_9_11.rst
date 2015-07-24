@@ -1,6 +1,11 @@
+.. _0-9-11:
+
 0.9.11
 ======
 *8/20/2013*
+
+
+**NOTE: Graphite 0.9.11 has a regression which breaks cache queries. Please use** :ref:`0.9.12 <0-9-12>` **instead**
 
 Graphite 0.9.11 is now available for usage. Source bundles are available from GitHub:
 
@@ -31,7 +36,7 @@ Security Notes
 --------------
 This release contains several security fixes for cross-site scripting (XSS) as well as a fix for
 a remote-execution exploit in graphite-web
-(`CVE-2013-5903 <http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=2013-5093>`_).
+(`CVE-2013-5093 <http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=2013-5093>`_).
 Patches for the past three prior releases are available in these gists:
 
 * `0.9.10 <https://gist.github.com/mleinart/6285953>`_
@@ -108,7 +113,7 @@ Carbon
 * min/max aggregation methods are now supported (ishiro)
 
 Whisper
-^^^^^^
+^^^^^^^
 * Better commandline sanity checking and messaging (sejeff)
 * Handle SIGPIPE correctly in commandline utils (sejeff)
 * Option to intelligently aggregate values on whisper-resize (jens-rantil)

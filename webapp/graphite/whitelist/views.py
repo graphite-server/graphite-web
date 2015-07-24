@@ -13,10 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 import os
+import pickle
 from random import randint
-from django.http import HttpResponse
 from django.conf import settings
 
+from graphite.compat import HttpResponse
 from graphite.util import unpickle
 
 

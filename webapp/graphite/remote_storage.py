@@ -6,7 +6,6 @@ from threading import Lock, Event
 from django.conf import settings
 from django.core.cache import cache
 from graphite.node import LeafNode, BranchNode
-from graphite.intervals import Interval, IntervalSet
 from graphite.readers import FetchInProgress
 from graphite.logger import log
 from graphite.util import unpickle
@@ -118,7 +117,7 @@ class FindRequest(object):
 
 
 class RemoteReader(object):
-  __slots__ = ('store', 'metric_path', 'intervals', 'query')
+  __slots__ = ('store', 'metric_path', 'intervals', 'query', 'connection')
   cache_lock = Lock()
   request_cache = {}
   request_locks = {}
@@ -129,6 +128,7 @@ class RemoteReader(object):
     self.metric_path = node_info['path']
     self.intervals = node_info['intervals']
     self.query = bulk_query or node_info['path']
+    self.connection = None
 
   def __repr__(self):
     return '<RemoteReader[%x]: %s>' % (id(self), self.store.host)
@@ -249,11 +249,12 @@ class HTTPConnectionWithTimeout(httplib.HTTPConnection):
           pass
         self.sock.connect(sa)
         self.sock.settimeout(None)
-      except socket.error, msg:
+      except socket.error as e:
+        msg = e
         if self.sock:
           self.sock.close()
           self.sock = None
           continue
       break
     if not self.sock:
-      raise socket.error, msg
+      raise socket.error(msg)

@@ -1,6 +1,5 @@
 import os
 import time
-from graphite.node import LeafNode, BranchNode
 from graphite.intervals import Interval, IntervalSet
 from graphite.carbonlink import CarbonLink
 from graphite.logger import log
@@ -171,6 +170,9 @@ class WhisperReader(object):
     except:
       log.exception("Failed CarbonLink query '%s'" % self.real_metric_path)
       cached_datapoints = []
+
+    if isinstance(cached_datapoints, dict):
+      cached_datapoints = cached_datapoints.items()
 
     for (timestamp, value) in cached_datapoints:
       interval = timestamp - (timestamp % step)

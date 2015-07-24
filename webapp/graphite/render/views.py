@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 import csv
 import math
+import pytz
 from datetime import datetime
 from time import time
 from random import shuffle
@@ -26,11 +27,7 @@ try:
 except ImportError:
   import pickle
 
-try:  # See if there is a system installation of pytz first
-  import pytz
-except ImportError:  # Otherwise we fall back to Graphite's bundled version
-  from graphite.thirdparty import pytz
-
+from graphite.compat import HttpResponse
 from graphite.util import getProfileByUsername, json, unpickle
 from graphite.remote_storage import HTTPConnectionWithTimeout
 from graphite.logger import log
@@ -40,11 +37,12 @@ from graphite.render.functions import PieFunctions
 from graphite.render.hashing import hashRequest, hashData
 from graphite.render.glyph import GraphTypes
 
-from django.http import HttpResponse, HttpResponseServerError, HttpResponseRedirect
+from django.http import HttpResponseServerError, HttpResponseRedirect
 from django.template import Context, loader
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
+from django.utils.cache import add_never_cache_headers, patch_response_headers
 
 
 def renderView(request):
@@ -56,6 +54,7 @@ def renderView(request):
     'startTime' : requestOptions['startTime'],
     'endTime' : requestOptions['endTime'],
     'localOnly' : requestOptions['localOnly'],
+    'template' : requestOptions['template'],
     'data' : []
   }
   data = requestContext['data']
@@ -79,7 +78,7 @@ def renderView(request):
           name,value = target.split(':',1)
           value = float(value)
         except:
-          raise ValueError, "Invalid target '%s'" % target
+          raise ValueError("Invalid target '%s'" % target)
         data.append( (name,value) )
       else:
         seriesList = evaluateTarget(requestContext, target)
@@ -115,8 +114,8 @@ def renderView(request):
         log.rendering("Retrieval of %s took %.6f" % (target, time() - t))
         data.extend(seriesList)
 
-    if useCache:
-      cache.set(dataKey, data, cacheTimeout)
+      if useCache:
+        cache.add(dataKey, data, cacheTimeout)
 
     # If data is all we needed, we're done
     format = requestOptions.get('format')
@@ -151,14 +150,14 @@ def renderView(request):
             for r in range(1, valuesToLose):
               del series[0]
             series.consolidate(valuesPerPoint)
-            timestamps = range(series.start, series.end, secondsPerPoint)
+            timestamps = range(int(series.start), int(series.end) + 1, int(secondsPerPoint))
           else:
-            timestamps = range(series.start, series.end, series.step)
+            timestamps = range(int(series.start), int(series.end) + 1, int(series.step))
           datapoints = zip(series, timestamps)
           series_data.append(dict(target=series.name, datapoints=datapoints))
       else:
         for series in data:
-          timestamps = range(series.start, series.end, series.step)
+          timestamps = range(int(series.start), int(series.end) + 1, int(series.step))
           datapoints = zip(series, timestamps)
           series_data.append(dict(target=series.name, datapoints=datapoints))
 
@@ -167,10 +166,13 @@ def renderView(request):
           content="%s(%s)" % (requestOptions['jsonp'], json.dumps(series_data)),
           content_type='text/javascript')
       else:
-        response = HttpResponse(content=json.dumps(series_data), content_type='application/json')
+        response = HttpResponse(content=json.dumps(series_data),
+                                content_type='application/json')
 
-      response['Pragma'] = 'no-cache'
-      response['Cache-Control'] = 'no-cache'
+      if useCache:
+        patch_response_headers(response, cache_timeout=cacheTimeout)
+      else:
+        add_never_cache_headers(response)
       return response
 
     if format == 'raw':
@@ -208,10 +210,13 @@ def renderView(request):
       content="%s(%s)" % (requestOptions['jsonp'], json.dumps(image)),
       content_type='text/javascript')
   else:
-    response = buildResponse(image, useSVG and 'image/svg+xml' or 'image/png')
+    response = buildResponse(image, 'image/svg+xml' if useSVG else 'image/png')
 
   if useCache:
-    cache.set(requestKey, response, cacheTimeout)
+    cache.add(requestKey, response, cacheTimeout)
+    patch_response_headers(response, cache_timeout=cacheTimeout)
+  else:
+    add_never_cache_headers(response)
 
   log.rendering('Total rendering time %.6f seconds' % (time() - start))
   return response
@@ -248,6 +253,12 @@ def parseOptions(request):
   # Collect the targets
   for target in mytargets:
     requestOptions['targets'].append(target)
+
+  template = dict()
+  for key, val in queryParams.items():
+    if key.startswith("template["):
+      template[key[9:-1]] = val
+  requestOptions['template'] = template
 
   if 'pickle' in queryParams:
     requestOptions['format'] = 'pickle'
@@ -355,7 +366,7 @@ def delegateRendering(graphType, graphOptions):
 def renderLocalView(request):
   try:
     start = time()
-    reqParams = StringIO(request.raw_post_data)
+    reqParams = StringIO(request.body)
     graphType = reqParams.readline().strip()
     optionsPickle = reqParams.read()
     reqParams.close()
@@ -363,7 +374,9 @@ def renderLocalView(request):
     options = unpickle.loads(optionsPickle)
     image = doImageRender(graphClass, options)
     log.rendering("Delegated rendering request took %.6f seconds" % (time() -  start))
-    return buildResponse(image)
+    response = buildResponse(image)
+    add_never_cache_headers(response)
+    return response
   except:
     log.exception("Exception in graphite.render.views.rawrender")
     return HttpResponseServerError()
@@ -417,10 +430,7 @@ def doImageRender(graphClass, graphOptions):
 
 
 def buildResponse(imageData, content_type="image/png"):
-  response = HttpResponse(imageData, content_type=content_type)
-  response['Cache-Control'] = 'no-cache'
-  response['Pragma'] = 'no-cache'
-  return response
+  return HttpResponse(imageData, content_type=content_type)
 
 
 def errorPage(message):

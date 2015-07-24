@@ -6,10 +6,12 @@ Graphite Documentation
    :maxdepth: 1
 
    overview
+   faq
    install
    carbon-daemons
    config-carbon
    feeding-carbon
+   admin-carbon
    config-local-settings
    config-webapp
    admin-webapp
@@ -18,8 +20,11 @@ Graphite Documentation
    functions
    dashboard
    whisper
+   storage-backends
    terminology
    tools
+   development
+   client-apis
    who-is-using
    releases
 

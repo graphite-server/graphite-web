@@ -12,7 +12,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
-import os, math, itertools, re
+import math, itertools, re
 try:
     import cairo
 except ImportError:
@@ -84,7 +84,7 @@ YEAR = DAY * 365
 try:
     datetime.now().strftime("%a %l%p")
     percent_l_supported = True
-except ValueError, e:
+except ValueError as e:
     percent_l_supported = False
 
 xAxisConfigs = (
@@ -126,6 +126,19 @@ UnitSystems = {
     ('G', 1000.0**3),
     ('M', 1000.0**2),
     ('K', 1000.0   )),
+  'sec': (
+    ('Y', 60*60*24*365),
+    ('M', 60*60*24*30),
+    ('D', 60*60*24),
+    ('H', 60*60),
+    ('m', 60)),
+  'msec': (
+    ('Y', 60*60*24*365*1000),
+    ('M', 60*60*24*30*1000),
+    ('D', 60*60*24*1000),
+    ('H', 60*60*1000),
+    ('m', 60*1000),
+    ('s', 1000)),
   'none' : [],
 }
 
@@ -155,7 +168,7 @@ class Graph:
     if self.logBase:
       if self.logBase == 'e':
         self.logBase = math.e
-      elif self.logBase <= 0:
+      elif self.logBase < 1:
         self.logBase = None
         params['logBase'] = None
       else:
@@ -214,7 +227,7 @@ class Graph:
       if len(s) == 8 and not forceAlpha:
         alpha = float( int(s[6:8],base=16) ) / 255.0
     else:
-      raise ValueError, "Must specify an RGB 3-tuple, an html color string, or a known color alias!"
+      raise ValueError("Must specify an RGB 3-tuple, an html color string, or a known color alias!")
     r,g,b = [float(c) / 255.0 for c in (r,g,b)]
     self.ctx.set_source_rgba(r,g,b,alpha)
 
@@ -495,10 +508,12 @@ class Graph:
         for char in re.findall(r'L -(\d+) -\d+', match.group(1)):
           name += chr(int(char))
         return '</g><g data-header="true" class="%s">' % name
-      svgData = re.sub(r'<path.+?d="M -88 -88 (.+?)"/>', onHeaderPath, svgData)
+      (svgData, subsMade) = re.subn(r'<path.+?d="M -88 -88 (.+?)"/>', onHeaderPath, svgData)
 
       # Replace the first </g><g> with <g>, and close out the last </g> at the end
-      svgData = svgData.replace('</g><g data-header','<g data-header',1) + "</g>"
+      svgData = svgData.replace('</g><g data-header','<g data-header',1)
+      if subsMade > 0:
+        svgData += "</g>"
       svgData = svgData.replace(' data-header="true"','')
 
       fileObj.write(svgData)
@@ -553,7 +568,7 @@ class LineGraph(Graph):
     if len(self.dataRight) > 0:
       self.secondYAxis = True
 
-    #API compatibilty hacks
+    #API compatibility hacks
     if params.get('graphOnly',False):
       params['hideLegend'] = True
       params['hideGrid'] = True
@@ -868,7 +883,7 @@ class LineGraph(Graph):
       else:
         self.setColor( series.color, series.options.get('alpha') or 1.0 )
 
-      # The number of preceeding datapoints that had a None value.
+      # The number of preceding datapoints that had a None value.
       consecutiveNones = 0
 
       for index, value in enumerate(series):
@@ -1017,10 +1032,10 @@ class LineGraph(Graph):
   def setupYAxis(self):
     seriesWithMissingValues = [ series for series in self.data if None in series ]
 
-    if self.params.get('drawNullAsZero') and seriesWithMissingValues:
+    yMinValue = safeMin( [safeMin(series) for series in self.data if not series.options.get('drawAsInfinite')] )
+
+    if yMinValue > 0.0 and self.params.get('drawNullAsZero') and seriesWithMissingValues:
       yMinValue = 0.0
-    else:
-      yMinValue = safeMin( [safeMin(series) for series in self.data if not series.options.get('drawAsInfinite')] )
 
     if self.areaMode == 'stacked':
       length = safeMin( [len(series) for series in self.data if not series.options.get('drawAsInfinite')] )
@@ -1031,6 +1046,9 @@ class LineGraph(Graph):
       yMaxValue = safeMax( sumSeries )
     else:
       yMaxValue = safeMax( [safeMax(series) for series in self.data if not series.options.get('drawAsInfinite')] )
+
+    if yMaxValue < 0.0 and self.params.get('drawNullAsZero') and seriesWithMissingValues:
+      yMaxValue = 0.0
 
     if yMinValue is None:
       yMinValue = 0.0
@@ -1419,8 +1437,6 @@ class LineGraph(Graph):
       labels = self.yLabelValuesL
     else:
       labels = self.yLabelValues
-    if self.logBase:
-      labels.append(self.logBase * max(labels))
 
     for i, value in enumerate(labels):
       self.ctx.set_line_width(0.4)

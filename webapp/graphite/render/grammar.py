@@ -1,4 +1,9 @@
-from pyparsing import *
+from pyparsing import (
+    ParserElement, Forward, Combine, Optional, Word, Literal, CaselessKeyword,
+    CaselessLiteral, Group, FollowedBy, LineEnd, OneOrMore, ZeroOrMore,
+    nums, alphas, alphanums, printables, delimitedList, quotedString,
+    __version__,
+)
 
 ParserElement.enablePackrat()
 grammar = Forward()
@@ -95,8 +100,26 @@ pathElement = Combine(
 )
 pathExpression = delimitedList(pathElement, delim='.', combine=True)('pathExpression')
 
-expression << Group(call | pathExpression)('expression')
-grammar << expression
+litarg = Group(
+  number | aString
+)('args*')
+litkwarg = Group(argname + equal + litarg)('kwargs*')
+litargs = delimitedList(~litkwarg + litarg)  # lookahead to prevent failing on equals
+litkwargs = delimitedList(litkwarg)
+
+template = Group(
+  Literal('template') + leftParen +
+  (call | pathExpression) +
+  Optional(comma + (litargs | litkwargs)) +
+  rightParen
+)('template')
+
+if __version__.startswith('1.'):
+    expression << Group(template | call | pathExpression)('expression')
+    grammar << expression
+else:
+    expression <<= Group(template | call | pathExpression)('expression')
+    grammar <<= expression
 
 
 def enableDebug():
