@@ -47,19 +47,6 @@ STATIC_ROOT = '/opt/graphite/webapp/content/'
 # URL that handles the static content from STATIC_ROOT.
 STATIC_URL = '/content/'
 
-# List of callables that know how to import templates from various sources.
-#XXX Compatibility for Django 1.1. To be removed after 0.9.10
-if DJANGO_VERSION < (1,2):
-  TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
-    'django.template.loaders.app_directories.load_template_source',
-  )
-else:
-  TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-  )
-
 MIDDLEWARE_CLASSES = (
   'graphite.middleware.LogExceptionsMiddleware',
   'django.middleware.common.CommonMiddleware',
