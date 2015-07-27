@@ -136,10 +136,6 @@ except ImportError:
 if not GRAPHITE_WEB_APP_SETTINGS_LOADED:
   from graphite.app_settings import *  # noqa
 
-STATICFILES_DIRS = (
-    join(WEBAPP_DIR, 'content'),
-)
-
 ## Set config dependent on flags set in local_settings
 # Path configuration
 if not STATIC_ROOT:
