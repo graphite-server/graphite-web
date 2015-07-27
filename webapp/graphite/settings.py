@@ -26,6 +26,9 @@ WEBAPP_VERSION = '0.10.0-alpha'
 DEBUG = False
 JAVASCRIPT_DEBUG = False
 
+# Setting wsgi application object
+WSGI_APPLICATION = 'graphite.wsgi.application'
+
 # Filesystem layout
 WEB_DIR = dirname( abspath(__file__) )
 WEBAPP_DIR = dirname(WEB_DIR)
