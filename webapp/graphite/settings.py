@@ -208,7 +208,7 @@ if MEMCACHE_HOSTS:
     }
 
 # Authentication shortcuts
-if USE_AUTH_LDAP and LDAP_URI is None:
+if USE_LDAP_AUTH and LDAP_URI is None:
   LDAP_URI = "ldap://%s:%d/" % (LDAP_SERVER, LDAP_PORT)
 
 if USE_REMOTE_USER_AUTHENTICATION or REMOTE_USER_BACKEND:
