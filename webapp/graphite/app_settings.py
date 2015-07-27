@@ -87,6 +87,7 @@ INSTALLED_APPS = (
   'django.contrib.contenttypes',
   'django.contrib.staticfiles',
   'tagging',
+  'mod_wsgi.server',
 )
 
 AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
