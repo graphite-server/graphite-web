@@ -89,11 +89,15 @@ STORAGE_FINDERS = (
 )
 
 #Authentication settings
-USE_AUTH_LDAP = False
-AUTH_LDAP_SERVER_URI = "" # "ldapserver.mydomain.com"
-AUTH_LDAP_BIND_DN = "" # Empty for anonymous auth
-AUTH_LDAP_BIND_PASSWORD = "" # Empty for anonymous auth
-AUTH_LDAP_USER_SEARCH = "" # LDAPSearch("OU=users,DC=mydomain,DC=com", ldap.SCOPE_SUBTREE, "(uid=%(user)s)")
+USE_LDAP_AUTH = False
+LDAP_SERVER = "" # "ldapserver.mydomain.com"
+LDAP_PORT = 389
+LDAP_USE_TLS = False
+LDAP_SEARCH_BASE = "" # "OU=users,DC=mydomain,DC=com"
+LDAP_BASE_USER = "" # "CN=some_readonly_account,DC=mydomain,DC=com"
+LDAP_BASE_PASS = "" # "my_password"
+LDAP_USER_QUERY = "" # "(username=%s)"  For Active Directory use "(sAMAccountName=%s)"
+LDAP_URI = None
 
 #Set this to True to delegate authentication to the web server
 USE_REMOTE_USER_AUTHENTICATION = False
