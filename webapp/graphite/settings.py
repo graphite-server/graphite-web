@@ -226,7 +226,8 @@ if USE_REMOTE_USER_AUTHENTICATION or REMOTE_USER_BACKEND:
     AUTHENTICATION_BACKENDS.insert(0,'django.contrib.auth.backends.RemoteUserBackend')
 
 if USE_LDAP_AUTH:
-  AUTHENTICATION_BACKENDS.insert(0,'graphite.account.ldapBackend.LDAPBackend')
+  AUTHENTICATION_BACKENDS.insert(0,'django.contrib.auth.backends.ModelBackend')
+  AUTHENTICATION_BACKENDS.insert(0,'django_auth_ldap.backend.LDAPBackend')
 
 if SECRET_KEY == 'UNSAFE_DEFAULT':
   warn('SECRET_KEY is set to an unsafe default. This should be set in local_settings.py for better security')
