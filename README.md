@@ -15,7 +15,7 @@ Graphite consists of three major components:
 ## About graphite-server organization
 
 The graphite-server is a fork of all major components of [graphite-project](https://github.com/graphite-server).
-It is inteded to be a custom made version for my own purposes. 
+It is inteded to be a custom made version centered in centos and other specific technologies. 
 The plan is to constantly update these projects base on [graphite-project](https://github.com/graphite-server).
 So it is highly recommended to contribute to that project.  
 
