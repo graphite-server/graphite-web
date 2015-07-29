@@ -1,6 +1,6 @@
 # Graphite-Web
 
-[![Build Status](https://travis-ci.org/graphite-server/graphite-web.png?branch=master)](https://travis-ci.org/graphite-project/graphite-web)
+[![Build Status](https://travis-ci.org/graphite-project/graphite-web.png?branch=master)](https://travis-ci.org/graphite-project/graphite-web)
 
 ## Overview
 
