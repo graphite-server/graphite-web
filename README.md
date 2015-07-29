@@ -23,7 +23,7 @@ So it is highly recommended to contribute to that project.
 
 Please refer to the instructions at [readthedocs](http://graphite.readthedocs.org/) for general installation.
 
-For particular instructions in centos refer to this [repo wiki](https://github.com/graphite-server/graphite-web/wiki) (In preparation).
+For particular instructions in centos refer [centos-install](https://github.com/graphite-server/graphite-web/centos-install.md).
 
 ## License
 
