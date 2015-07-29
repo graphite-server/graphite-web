@@ -62,8 +62,6 @@ git clone https://github.com/graphite-server/whisper.git
 git clone https://github.com/graphite-server/graphite-web
 ```
 
--   Install using python setup, by default it will be put at **/opt/graphite**.
-
 Setup graphite
 --------------
 
@@ -109,7 +107,7 @@ MEMCACHE_HOSTS = ['127.0.0.1:11211']
 ## LDAP using django-auth-ldap
 import ldap
 from django_auth_ldap.config import LDAPSearch,LDAPSearchUnion
-USE_AUTH_LDAP = True
+USE_LDAP_AUTH = True
 AUTH_LDAP_SERVER_URI = "ldap://ldap.company.com:389"
 AUTH_LDAP_BIND_DN = ""
 AUTH_LDAP_BIND_PASSWORD = ""
@@ -174,7 +172,14 @@ cp /opt/graphite/conf/storage-aggregation.conf.example /opt/graphite/conf/storag
 -   Edit *storage-schemas.conf* and set the retention rules for each metric
 
 ``` bash
-# Example with pool.host.* metrics
+[carbon]
+pattern = ^carbon\.
+retentions = 60:90d
+
+[collectl]
+pattern = ^collectl\.
+retentions = 60:90d
+
 [default]
 pattern = .*
 retentions = 1m:24h,5m:60h,30m:15d,120m:62d,1440m:762d
@@ -200,6 +205,12 @@ root             -       nofile          65535
 ..
 # Run the following to increase the limit for the current session
 ulimit -n 65535
+```
+
+-   Set the right permit ownership for storage directory
+
+``` bash
+chown -R apache:apache /opt/graphite/storage
 ```
 
 -   Test mod\_wsgi express (service at localhost:8000)
@@ -315,13 +326,15 @@ serverurl=unix:///tmp/supervisor.sock ; use a unix:// URL  for a unix socket
 command=/opt/graphite/bin/carbon-cache.py start --debug
 autostart=true
 autorestart=true
-stdout_logfile=/opt/graphite/storage/log/carbon-cache/stdout.log
+redirect_stderr=true
+stdout_logfile=/opt/graphite/storage/log/carbon/cache.log
 stdout_logfile_maxbytes=1MB
 
 [program:graphite-webapp]
 command=python /opt/graphite/webapp/manage.py runmodwsgi --user apache --group apache --port=80 --access-log --log-to-terminal --server-root=/opt/graphite/storage/modwsgi
 autostart=true
 autorestart=true
+redirect_stderr=true
 stdout_logfile=/opt/graphite/storage/log/webapp/modwsgi.log
 stdout_logfile_maxbytes=1MB
 EOF
@@ -355,16 +368,6 @@ chmod u+w /etc/collectl.conf
 edit /etc/collectl.conf
 ...
 DaemonCommands = -i 60 -s cDmn --export graphite,{hostname},b=collectl.
-...
-```
-
--   Add the following schema to */opt/graphite/conf/storage-schemas.conf*
-
-``` bash
-...
-[collectl]
-pattern = ^collectl\.
-retentions = 60:90d
 ...
 ```
 
