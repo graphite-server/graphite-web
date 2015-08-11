@@ -121,10 +121,10 @@ def dashboard(request, name=None):
   initialError = None
   debug = request.GET.get('debug', False)
   theme = request.GET.get('theme', config.ui_config['theme'])
-  css_file = finders.find('css/dashboard-%s.css' % theme)
-  if css_file is None:
-    initialError = "Invalid theme '%s'" % theme
-    theme = config.ui_config['theme']
+  #css_file = finders.find('css/dashboard-%s.css' % theme)
+  #if css_file is None:
+  #  initialError = "Invalid theme '%s'" % theme
+  #  theme = config.ui_config['theme']
 
   context = {
     'schemes_json': mark_safe(json.dumps(config.schemes)),
